@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LivingMA — Living Meta-Analysis Dashboard</title>
+<style>
+:root {
+  --bg: #0f0f1a;
+  --surface: #1a1a2e;
+  --surface2: #16213e;
+  --surface3: #0d3b66;
+  --accent: #4fc3f7;
+  --accent2: #81d4fa;
+  --accent3: #29b6f6;
+  --green: #66bb6a;
+  --red: #ef5350;
+  --orange: #ffa726;
+  --yellow: #ffee58;
+  --text: #e0e0e0;
+  --text2: #9e9e9e;
+  --text3: #bdbdbd;
+  --border: #2a2a4a;
+  --border2: #3a3a5a;
+  --radius: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.logo-pulse {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 700; color: #0f0f1a;
+  flex-shrink: 0;
+}
+.header-title { font-size: 18px; font-weight: 700; color: var(--accent); }
+.header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.header-badges { display: flex; gap: 8px; margin-left: auto; }
+.badge {
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text2);
+}
+.badge.live { background: rgba(102,187,106,0.15); border-color: var(--green); color: var(--green); }
+nav {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  padding: 0 24px;
+  gap: 2px;
+}
+.tab-btn {
+  padding: 12px 20px;
+  background: none; border: none;
+  color: var(--text2); cursor: pointer;
+  font-size: 13px; font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-panel { display: none; padding: 24px; }
+.tab-panel.active { display: block; }
+main { max-width: 1400px; margin: 0 auto; }
+
+/* ---- DATA ENTRY TAB ---- */
+.entry-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.card-title {
+  font-size: 13px; font-weight: 700;
+  color: var(--accent); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.examples-row {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.ex-btn {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--surface2); color: var(--text3);
+  cursor: pointer; font-size: 12px; transition: all 0.2s;
+}
+.ex-btn:hover {
+  border-color: var(--accent); color: var(--accent);
+  background: rgba(79,195,247,0.08);
+}
+.measure-row {
+  display: flex; gap: 8px; margin-bottom: 16px; align-items: center;
+}
+.measure-row label { font-size: 12px; color: var(--text2); }
+.seg-btn {
+  padding: 5px 14px; border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--surface2); color: var(--text2);
+  cursor: pointer; font-size: 12px; transition: all 0.2s;
+}
+.seg-btn.active {
+  background: var(--accent); color: #0f0f1a; border-color: var(--accent); font-weight: 600;
+}
+.table-wrap { overflow-x: auto; }
+table.data-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+table.data-table th {
+  background: var(--surface2); color: var(--accent2);
+  padding: 8px 10px; text-align: left; font-weight: 600;
+  border-bottom: 2px solid var(--border2); white-space: nowrap;
+}
+table.data-table td {
+  padding: 6px 6px; border-bottom: 1px solid var(--border);
+}
+table.data-table tr:hover td { background: rgba(79,195,247,0.04); }
+table.data-table input {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 4px 8px; border-radius: 4px;
+  width: 100%; min-width: 60px; font-size: 13px;
+}
+table.data-table input:focus {
+  outline: none; border-color: var(--accent);
+}
+.del-btn {
+  background: none; border: none; color: var(--text2);
+  cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  font-size: 14px; transition: color 0.2s;
+}
+.del-btn:hover { color: var(--red); }
+.row-actions {
+  display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap;
+}
+.btn {
+  padding: 8px 16px; border-radius: 6px; border: none;
+  cursor: pointer; font-size: 13px; font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary {
+  background: var(--accent); color: #0f0f1a;
+}
+.btn-primary:hover { background: var(--accent2); }
+.btn-secondary {
+  background: var(--surface2); color: var(--text3);
+  border: 1px solid var(--border2);
+}
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: rgba(239,83,80,0.15); color: var(--red); border: 1px solid var(--red); }
+.btn-danger:hover { background: rgba(239,83,80,0.25); }
+.paste-area {
+  width: 100%; height: 100px;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 8px; border-radius: 6px;
+  font-family: monospace; font-size: 12px; resize: vertical;
+  margin-bottom: 8px;
+}
+.paste-area:focus { outline: none; border-color: var(--accent); }
+.settings-section { margin-bottom: 20px; }
+.settings-section h4 { font-size: 12px; color: var(--accent2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+.field-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+.field-row label { font-size: 12px; color: var(--text2); width: 120px; flex-shrink: 0; }
+.field-row input[type=number], .field-row select {
+  flex: 1; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 6px 10px; border-radius: 6px; font-size: 13px;
+}
+.field-row input:focus, .field-row select:focus { outline: none; border-color: var(--accent); }
+.field-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); }
+.alert-desc { font-size: 11px; color: var(--text2); margin-top: -6px; margin-bottom: 10px; margin-left: 130px; }
+.stat-count {
+  display: inline-block; background: rgba(79,195,247,0.1);
+  border: 1px solid rgba(79,195,247,0.3); color: var(--accent);
+  padding: 2px 10px; border-radius: 20px; font-size: 12px; margin-right: 6px;
+}
+
+/* ---- TIMELINE TAB ---- */
+.timeline-layout {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.timeline-controls {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.slider-wrap { flex: 1; min-width: 200px; }
+.slider-wrap label {
+  font-size: 12px; color: var(--text2); display: block; margin-bottom: 6px;
+}
+.slider-wrap input[type=range] {
+  width: 100%; accent-color: var(--accent); height: 6px;
+}
+.play-controls { display: flex; gap: 8px; align-items: center; }
+.play-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #0f0f1a; transition: all 0.2s;
+}
+.play-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.speed-select {
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text2); padding: 6px 10px; border-radius: 6px; font-size: 12px;
+}
+.timeline-info {
+  display: flex; gap: 12px; flex-wrap: wrap;
+}
+.info-chip {
+  padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  background: var(--surface2); border: 1px solid var(--border2);
+}
+.info-chip.green { background: rgba(102,187,106,0.1); border-color: var(--green); color: var(--green); }
+.info-chip.blue { background: rgba(79,195,247,0.1); border-color: var(--accent); color: var(--accent); }
+.info-chip.orange { background: rgba(255,167,38,0.1); border-color: var(--orange); color: var(--orange); }
+.info-chip.red { background: rgba(239,83,80,0.1); border-color: var(--red); color: var(--red); }
+.canvas-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.canvas-card h3 {
+  font-size: 13px; font-weight: 700; color: var(--accent2);
+  margin-bottom: 12px;
+}
+canvas { display: block; }
+.maturity-banner {
+  display: none; margin-top: 12px;
+  padding: 10px 16px; border-radius: 6px;
+  background: rgba(102,187,106,0.1); border: 1px solid var(--green);
+  color: var(--green); font-size: 13px; font-weight: 600;
+}
+.maturity-banner.visible { display: flex; align-items: center; gap: 10px; }
+
+/* ---- WHAT-IF TAB ---- */
+.whatif-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
+}
+.whatif-results {
+  display: flex; flex-direction: column; gap: 16px;
+}
+.comparison-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.before-after-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.before-after-card h4 {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 12px;
+}
+.before-after-card.before h4 { color: var(--text2); }
+.before-after-card.after h4 { color: var(--green); }
+.stat-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.stat-row:last-child { border-bottom: none; }
+.stat-label { font-size: 12px; color: var(--text2); }
+.stat-value { font-size: 14px; font-weight: 600; color: var(--text); }
+.delta-panel {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.delta-panel h4 { font-size: 12px; font-weight: 700; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+.delta-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.delta-row:last-child { border-bottom: none; }
+.delta-val.pos { color: var(--red); }
+.delta-val.neg { color: var(--green); }
+.delta-val.neut { color: var(--text2); }
+
+/* ---- REPORT TAB ---- */
+.report-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.report-full { grid-column: 1 / -1; }
+.change-point-item {
+  padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;
+  background: var(--surface2); border-left: 3px solid var(--orange);
+  font-size: 13px;
+}
+.alert-item {
+  padding: 10px 14px; border-radius: 6px; margin-bottom: 8px;
+  background: rgba(239,83,80,0.08); border-left: 3px solid var(--red);
+  font-size: 13px;
+}
+.export-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.verdict-box {
+  padding: 14px 18px; border-radius: 8px; margin-bottom: 16px;
+  display: flex; align-items: flex-start; gap: 14px;
+}
+.verdict-box.stable { background: rgba(102,187,106,0.1); border: 1px solid var(--green); }
+.verdict-box.maturing { background: rgba(255,167,38,0.1); border: 1px solid var(--orange); }
+.verdict-box.unstable { background: rgba(239,83,80,0.1); border: 1px solid var(--red); }
+.verdict-icon { font-size: 24px; flex-shrink: 0; }
+.verdict-text h4 { font-weight: 700; margin-bottom: 4px; }
+.verdict-text.stable h4 { color: var(--green); }
+.verdict-text.maturing h4 { color: var(--orange); }
+.verdict-text.unstable h4 { color: var(--red); }
+.verdict-text p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.empty-state {
+  text-align: center; padding: 48px 24px; color: var(--text2);
+}
+.empty-state .es-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; color: var(--text3); margin-bottom: 8px; }
+.empty-state p { font-size: 13px; }
+
+/* responsive */
+@media (max-width: 900px) {
+  .entry-grid, .whatif-layout, .report-layout { grid-template-columns: 1fr; }
+  .comparison-grid { grid-template-columns: 1fr; }
+  .report-full { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-pulse" aria-hidden="true">L</div>
+  <div>
+    <div class="header-title">LivingMA</div>
+    <div class="header-sub">Living Meta-Analysis Dashboard · Mahmood Ahmad, Royal Free Hospital, London</div>
+  </div>
+  <div class="header-badges">
+    <span class="badge live">LIVE</span>
+    <span class="badge">v1.0</span>
+    <span class="badge">REML+HKSJ</span>
+  </div>
+</header>
+
+<nav role="tablist" aria-label="Dashboard tabs">
+  <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-data" id="tbtn-data" onclick="switchTab('data')">
+    Data Entry
+  </button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-timeline" id="tbtn-timeline" onclick="switchTab('timeline')">
+    Timeline
+  </button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-whatif" id="tbtn-whatif" onclick="switchTab('whatif')">
+    What-If Simulator
+  </button>
+  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-report" id="tbtn-report" onclick="switchTab('report')">
+    Report &amp; Export
+  </button>
+</nav>
+
+<main>
+
+<!-- ========== TAB 1: DATA ENTRY ========== -->
+<div class="tab-panel active" id="tab-data" role="tabpanel" aria-labelledby="tbtn-data">
+  <div class="entry-grid">
+
+    <div>
+      <div class="card">
+        <div class="card-title">
+          Studies
+          <span id="study-count-badge" class="stat-count">0 studies</span>
+        </div>
+
+        <div class="examples-row">
+          <span style="font-size:12px;color:var(--text2);align-self:center;">Examples:</span>
+          <button class="ex-btn" onclick="loadExample(0)">SGLT2i HF (2019-2022)</button>
+          <button class="ex-btn" onclick="loadExample(1)">Statins Prevention (1995-2019)</button>
+          <button class="ex-btn" onclick="loadExample(2)">HCQ COVID-19 (2020)</button>
+        </div>
+
+        <div class="measure-row">
+          <label>Effect measure:</label>
+          <button class="seg-btn active" id="seg-RR" onclick="setMeasure('RR')">RR</button>
+          <button class="seg-btn" id="seg-OR" onclick="setMeasure('OR')">OR</button>
+          <button class="seg-btn" id="seg-MD" onclick="setMeasure('MD')">MD</button>
+          <button class="seg-btn" id="seg-SMD" onclick="setMeasure('SMD')">SMD</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table" id="study-table">
+            <thead id="study-thead"></thead>
+            <tbody id="study-tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="row-actions">
+          <button class="btn btn-primary" onclick="addRow()">+ Add Row</button>
+          <button class="btn btn-secondary" onclick="clearAll()">Clear All</button>
+          <button class="btn btn-secondary" onclick="runAnalysis()">Run Analysis</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">Paste from Spreadsheet</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:8px;">
+          Copy rows from Excel/Sheets and paste below. Column order: Study, Year, then data columns matching current mode.
+        </p>
+        <textarea class="paste-area" id="paste-area" placeholder="Study&#9;Year&#9;Events_E&#9;N_E&#9;Events_C&#9;N_C&#10;DAPA-HF&#9;2019&#9;386&#9;2373&#9;502&#9;2371"></textarea>
+        <button class="btn btn-secondary" onclick="parsePaste()">Import Pasted Data</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="card-title">Settings</div>
+        <div class="settings-section">
+          <h4>Analysis</h4>
+          <div class="field-row">
+            <label>Continuity corr.</label>
+            <input type="number" id="set-cc" value="0.5" step="0.1" min="0" max="1">
+          </div>
+          <div class="field-row">
+            <label>Change-point %</label>
+            <input type="number" id="set-cp-thresh" value="10" step="1" min="1" max="50">
+          </div>
+          <div class="field-row">
+            <label>Stability window</label>
+            <input type="number" id="set-stab-window" value="3" step="1" min="2" max="5">
+          </div>
+          <div class="field-row">
+            <label>Stability tol. %</label>
+            <input type="number" id="set-stab-tol" value="5" step="1" min="1" max="20">
+          </div>
+        </div>
+        <div class="settings-section">
+          <h4>Alert Thresholds</h4>
+          <div class="field-row">
+            <label>Effect crosses</label>
+            <input type="number" id="alert-effect" placeholder="e.g. 1.0" step="0.01">
+          </div>
+          <div class="alert-desc">Alert when pooled estimate crosses this value</div>
+          <div class="field-row">
+            <label>PI width &gt;</label>
+            <input type="number" id="alert-pi" placeholder="e.g. 0.5" step="0.01" min="0">
+          </div>
+          <div class="alert-desc">Alert when prediction interval width exceeds this</div>
+          <div class="field-row">
+            <label>I² exceeds %</label>
+            <input type="number" id="alert-i2" placeholder="e.g. 75" step="1" min="0" max="100">
+          </div>
+          <div class="alert-desc">Alert when I² exceeds this threshold</div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="saveSettings()">Save Settings</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========== TAB 2: TIMELINE ========== -->
+<div class="tab-panel" id="tab-timeline" role="tabpanel" aria-labelledby="tbtn-timeline">
+  <div id="timeline-empty" class="empty-state">
+    <div class="es-icon">📈</div>
+    <h3>No data yet</h3>
+    <p>Enter studies in the Data Entry tab and click "Run Analysis"</p>
+  </div>
+  <div id="timeline-content" style="display:none">
+    <div class="timeline-layout">
+
+      <div class="timeline-controls">
+        <div class="slider-wrap">
+          <label id="slider-label" for="timeline-slider">Studies included: 1 of 1</label>
+          <input type="range" id="timeline-slider" min="1" max="1" value="1"
+            oninput="onSliderChange(this.value)" aria-label="Timeline slider">
+        </div>
+        <div class="play-controls">
+          <button class="play-btn" id="play-btn" onclick="togglePlay()" aria-label="Play/pause animation" title="Play">&#9654;</button>
+          <select class="speed-select" id="speed-select" aria-label="Animation speed">
+            <option value="800">Slow</option>
+            <option value="500" selected>Normal</option>
+            <option value="250">Fast</option>
+          </select>
+        </div>
+        <div class="timeline-info" id="timeline-info"></div>
+      </div>
+
+      <div class="canvas-card">
+        <h3>Cumulative Forest Plot</h3>
+        <canvas id="forest-canvas" aria-label="Cumulative forest plot showing pooled effect estimates over time"></canvas>
+      </div>
+
+      <div class="maturity-banner" id="maturity-banner" role="status" aria-live="polite">
+        <span>&#10003;</span>
+        <span id="maturity-text">Evidence mature</span>
+      </div>
+
+      <div class="canvas-card">
+        <h3>Stability Chart — Pooled Effect Over Time</h3>
+        <canvas id="stability-canvas" aria-label="Stability chart showing evolution of pooled effect and confidence interval over time"></canvas>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB 3: WHAT-IF ========== -->
+<div class="tab-panel" id="tab-whatif" role="tabpanel" aria-labelledby="tbtn-whatif">
+  <div id="whatif-empty" class="empty-state">
+    <div class="es-icon">🔮</div>
+    <h3>No data yet</h3>
+    <p>Run an analysis first, then add a hypothetical study here.</p>
+  </div>
+  <div id="whatif-content" style="display:none">
+    <div class="whatif-layout">
+      <div class="card">
+        <div class="card-title">Hypothetical Study</div>
+        <div id="whatif-fields"></div>
+        <div class="field-row" style="margin-top:12px;">
+          <label>Study name</label>
+          <input type="text" id="wi-name" value="Future RCT" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;">
+        </div>
+        <div class="field-row">
+          <label>Year</label>
+          <input type="number" id="wi-year" value="2025" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;">
+        </div>
+        <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="runWhatIf()">Calculate Impact</button>
+      </div>
+
+      <div class="whatif-results" id="whatif-results">
+        <div class="comparison-grid">
+          <div class="before-after-card before">
+            <h4>Before (current evidence)</h4>
+            <div id="before-stats"></div>
+          </div>
+          <div class="before-after-card after">
+            <h4>After (with hypothetical)</h4>
+            <div id="after-stats"></div>
+          </div>
+        </div>
+        <div class="delta-panel">
+          <h4>Impact of Hypothetical Study</h4>
+          <div id="delta-stats"></div>
+        </div>
+        <div class="canvas-card">
+          <h3>What-If Forest Comparison</h3>
+          <canvas id="whatif-canvas" aria-label="What-if comparison forest plot showing before and after adding hypothetical study"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== TAB 4: REPORT ========== -->
+<div class="tab-panel" id="tab-report" role="tabpanel" aria-labelledby="tbtn-report">
+  <div id="report-empty" class="empty-state">
+    <div class="es-icon">📄</div>
+    <h3>No analysis to report</h3>
+    <p>Run an analysis from the Data Entry tab.</p>
+  </div>
+  <div id="report-content" style="display:none">
+    <div id="verdict-container" style="margin-bottom:16px;"></div>
+    <div class="report-layout">
+      <div class="card">
+        <div class="card-title">Change Points</div>
+        <div id="cp-list"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Alert Log</div>
+        <div id="alert-list"></div>
+      </div>
+      <div class="card report-full">
+        <div class="card-title">Summary Statistics</div>
+        <div id="summary-table"></div>
+        <div class="export-row">
+          <button class="btn btn-primary" onclick="exportCSV()">Download CSV</button>
+          <button class="btn btn-secondary" onclick="exportPNG()">Download PNG</button>
+          <button class="btn btn-secondary" onclick="exportReport()">Export HTML Report</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// =====================================================================
+// === DATA: BUILT-IN EXAMPLES ===
+// =====================================================================
+const EXAMPLES = [
+  {
+    name: 'SGLT2i Heart Failure (2019–2022)',
+    measure: 'RR',
+    studies: [
+      {study:'DAPA-HF',year:2019,eE:386,nE:2373,eC:502,nC:2371},
+      {study:'EMPEROR-Reduced',year:2020,eE:361,nE:1863,eC:462,nC:1867},
+      {study:'SOLOIST-WHF',year:2020,eE:245,nE:608,eC:311,nC:614},
+      {study:'DAPA-CKD (HF sub)',year:2020,eE:63,nE:468,eC:87,nC:472},
+      {study:'EMPEROR-Preserved',year:2021,eE:415,nE:2997,eC:511,nC:2991},
+      {study:'SCORED (HF sub)',year:2021,eE:154,nE:1050,eC:199,nC:1050},
+      {study:'DELIVER',year:2022,eE:512,nE:3131,eC:610,nC:3132},
+      {study:'EMPULSE',year:2022,eE:52,nE:265,eC:72,nC:265}
+    ]
+  },
+  {
+    name: 'Statins Primary Prevention (1995–2019)',
+    measure: 'RR',
+    studies: [
+      {study:'WOSCOPS',year:1995,eE:174,nE:3302,eC:248,nC:3293},
+      {study:'AFCAPS/TexCAPS',year:1998,eE:116,nE:3304,eC:183,nC:3301},
+      {study:'PROSPER',year:2002,eE:408,nE:2891,eC:473,nC:2913},
+      {study:'ALLHAT-LLT',year:2002,eE:631,nE:5170,eC:641,nC:5185},
+      {study:'ASCOT-LLA',year:2003,eE:154,nE:5168,eC:185,nC:5137},
+      {study:'CARDS',year:2004,eE:83,nE:1428,eC:127,nC:1410},
+      {study:'PREVEND IT',year:2004,eE:11,nE:216,eC:13,nC:208},
+      {study:'HYPOS',year:2005,eE:4,nE:100,eC:7,nC:100},
+      {study:'MEGA',year:2006,eE:66,nE:3866,eC:101,nC:3966},
+      {study:'JUPITER',year:2008,eE:142,nE:8901,eC:251,nC:8901},
+      {study:'HOPE-3',year:2016,eE:235,nE:6361,eC:304,nC:6344},
+      {study:'TRACE-RA',year:2019,eE:58,nE:1578,eC:53,nC:1584}
+    ]
+  },
+  {
+    name: 'Hydroxychloroquine COVID-19 (2020)',
+    measure: 'RR',
+    studies: [
+      {study:'Gautret',year:2020,eE:0,nE:20,eC:2,nC:16},
+      {study:'Chen Z',year:2020,eE:0,nE:31,eC:1,nC:31},
+      {study:'Mahevas',year:2020,eE:18,nE:84,eC:16,nC:89},
+      {study:'Tang',year:2020,eE:3,nE:75,eC:0,nC:75},
+      {study:'Horby (RECOVERY)',year:2020,eE:421,nE:1561,eC:790,nC:3155},
+      {study:'Cavalcanti',year:2020,eE:55,nE:221,eC:54,nC:227},
+      {study:'Abd-Elsalam',year:2020,eE:6,nE:97,eC:5,nC:97},
+      {study:'WHO SOLIDARITY',year:2020,eE:104,nE:947,eC:84,nC:906}
+    ]
+  }
+];
+
+// =====================================================================
+// === APP STATE ===
+// =====================================================================
+let state = {
+  measure: 'RR',
+  studies: [],
+  cumResults: [],
+  changePoints: [],
+  stability: null,
+  alerts: [],
+  sliderVal: 1,
+  playing: false,
+  playInterval: null,
+  whatIfResult: null
+};
+
+// =====================================================================
+// === MATH ENGINE ===
+// =====================================================================
+
+function normalCDF(x) {
+  const a1= 0.254829592, a2=-0.284496736, a3= 1.421413741;
+  const a4=-1.453152027, a5= 1.061405429, p = 0.3275911;
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.sqrt(2);
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return 0.5 * (1.0 + sign * y);
+}
+
+function normalInv(p) {
+  // Rational approximation
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02,
+             -2.759285104469687e+02, 1.383577518672690e+02,
+             -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02,
+             -1.556989798598866e+02, 6.680131188771972e+01,
+             -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03,-3.223964580411365e-01,
+             -2.400758277161838e+00,-2.549732539343734e+00,
+              4.374664141464968e+00, 2.938163982698783e+00];
+  const d = [ 7.784695709041462e-03, 3.224671290700398e-01,
+              2.445134137142996e+00, 3.754408661907416e+00];
+  const pLow=0.02425, pHigh=1-0.02425;
+  let q, r;
+  if (p < pLow) {
+    q = Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+           ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= pHigh) {
+    q = p - 0.5; r = q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+           (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+             ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+function tInv95(df) {
+  // Wilson-Hilferty approx for t-distribution quantile (95%)
+  if (df <= 0) return 1.96;
+  if (df === 1) return 12.706;
+  if (df === 2) return 4.303;
+  if (df === 3) return 3.182;
+  if (df === 4) return 2.776;
+  if (df === 5) return 2.571;
+  if (df === 10) return 2.228;
+  if (df === 20) return 2.086;
+  if (df >= 120) return 1.96;
+  // Approximation via normalInv with correction
+  const p = 0.975;
+  const z = normalInv(p);
+  return z + (z*z*z + z) / (4*df) + (5*z*z*z*z*z + 16*z*z*z + 3*z) / (96*df*df);
+}
+
+// Compute log(RR) and its variance from 2x2 table
+function logRR(eE, nE, eC, nC, cc) {
+  cc = cc ?? 0.5;
+  let a=eE, b=nE-eE, c=eC, d=nC-eC;
+  if (a===0 || b===0 || c===0 || d===0) { a+=cc; b+=cc; c+=cc; d+=cc; }
+  const logRr = Math.log(a/nE) - Math.log(c/nC);
+  const varLR = 1/a - 1/(a+b) + 1/c - 1/(c+d);
+  return {theta: logRr, v: varLR};
+}
+
+// Compute log(OR) and its variance
+function logOR(eE, nE, eC, nC, cc) {
+  cc = cc ?? 0.5;
+  let a=eE, b=nE-eE, c=eC, d=nC-eC;
+  if (a===0 || b===0 || c===0 || d===0) { a+=cc; b+=cc; c+=cc; d+=cc; }
+  const logOr = Math.log(a*d) - Math.log(b*c);
+  const varLO = 1/a + 1/b + 1/c + 1/d;
+  return {theta: logOr, v: varLO};
+}
+
+// MD effect size
+function mdEffect(mE, sdE, nE, mC, sdC, nC) {
+  const theta = mE - mC;
+  const pooledVar = ((nE-1)*sdE*sdE + (nC-1)*sdC*sdC) / (nE+nC-2);
+  const v = pooledVar*(1/nE + 1/nC);
+  return {theta, v};
+}
+
+// SMD (Hedges' g) effect size
+function smdEffect(mE, sdE, nE, mC, sdC, nC) {
+  const pooledSD = Math.sqrt(((nE-1)*sdE*sdE + (nC-1)*sdC*sdC) / (nE+nC-2));
+  if (pooledSD === 0) return {theta: 0, v: 0.001};
+  const d = (mE - mC) / pooledSD;
+  const df = nE + nC - 2;
+  const j = 1 - 3/(4*df - 1); // Hedges correction
+  const theta = d * j;
+  const v = (nE+nC)/(nE*nC) + theta*theta/(2*(nE+nC));
+  return {theta, v};
+}
+
+// REML tau^2 estimation (iterative)
+function remlTau2(thetas, vars) {
+  const k = thetas.length;
+  if (k < 2) return 0;
+  // Initial estimate: DerSimonian-Laird
+  const wF = vars.map(v => 1/v);
+  const sumW = wF.reduce((s,w)=>s+w,0);
+  const sumW2 = wF.reduce((s,w)=>s+w*w,0);
+  const muF = wF.reduce((s,w,i)=>s+w*thetas[i],0) / sumW;
+  const Q = wF.reduce((s,w,i)=>s+w*(thetas[i]-muF)**2,0);
+  const C = sumW - sumW2/sumW;
+  let tau2 = Math.max(0, (Q-(k-1))/C);
+
+  // REML iterations
+  for (let iter=0; iter<50; iter++) {
+    const wR = vars.map(v => 1/(v+tau2));
+    const sumWR = wR.reduce((s,w)=>s+w,0);
+    const sumWR2 = wR.reduce((s,w)=>s+w*w,0);
+    const muR = wR.reduce((s,w,i)=>s+w*thetas[i],0) / sumWR;
+    const P = sumWR - sumWR2/sumWR;
+    const QR = wR.reduce((s,w,i)=>s+w*(thetas[i]-muR)**2,0);
+    const tau2New = Math.max(0, tau2 + (QR-(k-1))/(P - sumWR2/sumWR) * (tau2**2 === 0 ? 1 : 1));
+    // Standard REML update
+    const denom = wR.reduce((s,w)=>s+w*w*(thetas[i]-muR)**2 - w, 0);
+    // simplified convergence: stop if change tiny
+    if (Math.abs(tau2New - tau2) < 1e-8) { tau2 = tau2New; break; }
+    tau2 = tau2New;
+  }
+  return tau2;
+}
+
+// Pool studies: REML + HKSJ
+function pool(thetas, vars) {
+  const k = thetas.length;
+  if (k === 0) return null;
+  if (k === 1) {
+    const se = Math.sqrt(vars[0]);
+    return {
+      estimate: thetas[0], se, ci95: [thetas[0]-1.96*se, thetas[0]+1.96*se],
+      pi95: [thetas[0]-1.96*se, thetas[0]+1.96*se],
+      I2: 0, tau2: 0, H2: 1, Q: 0, df: 0, k
+    };
+  }
+
+  const tau2 = remlTau2(thetas, vars);
+  const wR = vars.map(v => 1/(v+tau2));
+  const sumW = wR.reduce((s,w)=>s+w,0);
+  const muR = wR.reduce((s,w,i)=>s+w*thetas[i],0) / sumW;
+
+  // Heterogeneity stats
+  const wF = vars.map(v => 1/v);
+  const sumWF = wF.reduce((s,w)=>s+w,0);
+  const muF = wF.reduce((s,w,i)=>s+w*thetas[i],0) / sumWF;
+  const Q = wF.reduce((s,w,i)=>s+w*(thetas[i]-muF)**2,0);
+  const H2 = Math.max(1, Q/(k-1));
+  const typVar = (sumWF - wF.reduce((s,w)=>s+w*w,0)/sumWF) / (k-1);
+  const I2 = Math.max(0, Math.min(100, 100*(tau2)/(tau2 + 1/typVar)));
+
+  // HKSJ variance
+  const hksjVar = wR.reduce((s,w,i)=>s+w*(thetas[i]-muR)**2,0) / ((k-1)*sumW);
+  const seMuHK = Math.sqrt(hksjVar);
+
+  const t95 = tInv95(k-1);
+  const ci95 = [muR - t95*seMuHK, muR + t95*seMuHK];
+
+  // Prediction interval
+  let pi95;
+  if (k >= 3) {
+    const piSE = Math.sqrt(hksjVar + tau2);
+    const tPi = tInv95(k-2);
+    pi95 = [muR - tPi*piSE, muR + tPi*piSE];
+  } else {
+    pi95 = ci95.slice();
+  }
+
+  return {estimate: muR, se: seMuHK, ci95, pi95, I2, tau2, H2, Q, df: k-1, k};
+}
+
+// Extract effect sizes from study row
+function getEffectSize(row, measure, cc) {
+  cc = (cc !== null && cc !== undefined) ? cc : 0.5;
+  if (measure === 'RR') return logRR(row.eE, row.nE, row.eC, row.nC, cc);
+  if (measure === 'OR') return logOR(row.eE, row.nE, row.eC, row.nC, cc);
+  if (measure === 'MD') return mdEffect(row.mE, row.sdE, row.nE, row.mC, row.sdC, row.nC);
+  if (measure === 'SMD') return smdEffect(row.mE, row.sdE, row.nE, row.mC, row.sdC, row.nC);
+  return null;
+}
+
+function isLogScale(measure) { return measure === 'RR' || measure === 'OR'; }
+
+function toDisplay(val, measure) {
+  return isLogScale(measure) ? Math.exp(val) : val;
+}
+
+function fmt2(x) { return isFinite(x) ? x.toFixed(2) : '—'; }
+function fmt3(x) { return isFinite(x) ? x.toFixed(3) : '—'; }
+
+// =====================================================================
+// === TIMELINE ENGINE ===
+// =====================================================================
+
+function cumulativeByDate(studies, measure, cc) {
+  // Sort by year, then study name
+  const sorted = [...studies].sort((a,b) => a.year !== b.year ? a.year-b.year : a.study.localeCompare(b.study));
+  const results = [];
+  for (let k=1; k<=sorted.length; k++) {
+    const subset = sorted.slice(0, k);
+    const effects = subset.map(s => getEffectSize(s, measure, cc)).filter(e => e && isFinite(e.theta) && isFinite(e.v) && e.v > 0);
+    if (effects.length < 1) { results.push(null); continue; }
+    const thetas = effects.map(e => e.theta);
+    const vars   = effects.map(e => e.v);
+    const pooled = pool(thetas, vars);
+    if (!pooled) { results.push(null); continue; }
+    results.push({
+      k,
+      study: sorted[k-1].study,
+      year: sorted[k-1].year,
+      ...pooled,
+      sorted
+    });
+  }
+  return results;
+}
+
+function stabilityAnalysis(cumResults, window, tol) {
+  window = window ?? 3;
+  tol    = tol    ?? 5; // percent
+  const valid = cumResults.filter(r => r !== null);
+  if (valid.length < 2) return {stable: false, stableSince: null, changePct: [], piTrend: [], I2Trend: []};
+
+  const changePct = [];
+  for (let i=1; i<valid.length; i++) {
+    const prev = toDisplay(valid[i-1].estimate, state.measure);
+    const curr = toDisplay(valid[i].estimate, state.measure);
+    const pct  = prev !== 0 ? Math.abs((curr-prev)/Math.abs(prev))*100 : 0;
+    changePct.push(pct);
+  }
+
+  const piTrend = valid.map(r => {
+    const lo = toDisplay(r.pi95[0], state.measure);
+    const hi = toDisplay(r.pi95[1], state.measure);
+    return hi - lo;
+  });
+
+  const I2Trend = valid.map(r => r.I2);
+
+  // Stability: last `window` changes all within tol%
+  let stable = false;
+  let stableSince = null;
+  if (changePct.length >= window) {
+    for (let i=window-1; i<changePct.length; i++) {
+      const slice = changePct.slice(i-window+1, i+1);
+      if (slice.every(p => p <= tol)) {
+        if (!stable) { stable = true; stableSince = i - window + 2; }
+      }
+    }
+  }
+
+  return {stable, stableSince, changePct, piTrend, I2Trend};
+}
+
+function detectChangePoints(cumResults, threshold) {
+  threshold = threshold ?? 10; // percent
+  const valid = cumResults.filter(r => r !== null);
+  const cps = [];
+  for (let i=1; i<valid.length; i++) {
+    const prev = valid[i-1], curr = valid[i];
+    const prevDisp = toDisplay(prev.estimate, state.measure);
+    const currDisp = toDisplay(curr.estimate, state.measure);
+    const pct = prevDisp !== 0 ? Math.abs((currDisp-prevDisp)/Math.abs(prevDisp))*100 : 0;
+    const prevSig = prev.ci95[0] > 0 || prev.ci95[1] < 0; // on log scale: both same sign = significant
+    const currSig = curr.ci95[0] > 0 || curr.ci95[1] < 0;
+    const sigFlip = prevSig !== currSig;
+    if (pct >= threshold || sigFlip) {
+      const dir = currDisp > prevDisp ? 'increased' : 'decreased';
+      const nullCross = sigFlip ? (currSig ? ' and crossed significance threshold' : ' and lost significance') : '';
+      cps.push({
+        studyIndex: i,
+        studyName: curr.study,
+        year: curr.year,
+        beforeEst: prevDisp,
+        afterEst: currDisp,
+        pctChange: pct,
+        significanceFlip: sigFlip,
+        narrative: `${curr.study} (${curr.year}) ${dir} the pooled estimate from ${fmt3(prevDisp)} to ${fmt3(currDisp)} (${pct.toFixed(1)}% change)${nullCross}.`
+      });
+    }
+  }
+  return cps;
+}
+
+function computeAlerts(cumResults, alertEffect, alertPIWidth, alertI2) {
+  const alerts = [];
+  const valid = cumResults.filter(r => r !== null);
+  for (let i=0; i<valid.length; i++) {
+    const r = valid[i];
+    const est = toDisplay(r.estimate, state.measure);
+    const piW = toDisplay(r.pi95[1], state.measure) - toDisplay(r.pi95[0], state.measure);
+    if (alertEffect !== null && alertEffect !== undefined) {
+      const prevEst = i > 0 ? toDisplay(valid[i-1].estimate, state.measure) : null;
+      if (prevEst !== null) {
+        const crossed = (prevEst < alertEffect && est >= alertEffect) || (prevEst > alertEffect && est <= alertEffect);
+        if (crossed) {
+          alerts.push({type:'effect', k: r.k, study: r.study, year: r.year,
+            msg: `After ${r.study} (${r.year}): estimate crossed alert threshold ${alertEffect} (now ${fmt3(est)})`});
+        }
+      }
+    }
+    if (alertPIWidth !== null && alertPIWidth !== undefined && isFinite(piW) && piW > alertPIWidth) {
+      if (i === 0 || (toDisplay(valid[i-1].pi95[1],state.measure)-toDisplay(valid[i-1].pi95[0],state.measure)) <= alertPIWidth) {
+        alerts.push({type:'pi', k: r.k, study: r.study, year: r.year,
+          msg: `After ${r.study} (${r.year}): PI width ${fmt3(piW)} exceeds threshold ${alertPIWidth}`});
+      }
+    }
+    if (alertI2 !== null && alertI2 !== undefined && r.I2 > alertI2) {
+      if (i === 0 || valid[i-1].I2 <= alertI2) {
+        alerts.push({type:'i2', k: r.k, study: r.study, year: r.year,
+          msg: `After ${r.study} (${r.year}): I² = ${r.I2.toFixed(1)}% exceeds threshold ${alertI2}%`});
+      }
+    }
+  }
+  return alerts;
+}
+
+// =====================================================================
+// === WHAT-IF ENGINE ===
+// =====================================================================
+
+function whatIf(studies, hypo, measure, cc) {
+  const sorted = [...studies].sort((a,b)=>a.year!==b.year?a.year-b.year:a.study.localeCompare(b.study));
+  const makeEffects = (rows) => rows.map(s=>getEffectSize(s,measure,cc)).filter(e=>e&&isFinite(e.theta)&&e.v>0);
+  const beforeEff = makeEffects(sorted);
+  const before = pool(beforeEff.map(e=>e.theta), beforeEff.map(e=>e.v));
+  const withHypo = [...sorted, hypo];
+  const afterEff  = makeEffects(withHypo);
+  const after  = pool(afterEff.map(e=>e.theta), afterEff.map(e=>e.v));
+  if (!before || !after) return null;
+  const bEst = toDisplay(before.estimate, measure), aEst = toDisplay(after.estimate, measure);
+  const bCIW = toDisplay(before.ci95[1],measure)-toDisplay(before.ci95[0],measure);
+  const aCIW = toDisplay(after.ci95[1],measure)-toDisplay(after.ci95[0],measure);
+  return {
+    before: {...before, estDisp: bEst, ciLo: toDisplay(before.ci95[0],measure), ciHi: toDisplay(before.ci95[1],measure),
+             piLo: toDisplay(before.pi95[0],measure), piHi: toDisplay(before.pi95[1],measure)},
+    after:  {...after,  estDisp: aEst, ciLo: toDisplay(after.ci95[0],measure),  ciHi: toDisplay(after.ci95[1],measure),
+             piLo: toDisplay(after.pi95[0],measure),  piHi: toDisplay(after.pi95[1],measure)},
+    delta: {estimate: aEst-bEst, ciWidth: aCIW-bCIW, I2: after.I2-before.I2, tau2: after.tau2-before.tau2}
+  };
+}
+
+// =====================================================================
+// === CHART ENGINE ===
+// =====================================================================
+
+function setCanvasSize(canvas, w, h) {
+  const dpr = window.devicePixelRatio ?? 1;
+  canvas.width  = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width  = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
+
+const COLORS = {
+  bg: '#0f0f1a', surface: '#1a1a2e', surface2: '#16213e',
+  accent: '#4fc3f7', accent2: '#81d4fa', green: '#66bb6a',
+  red: '#ef5350', orange: '#ffa726', yellow: '#ffee58',
+  text: '#e0e0e0', text2: '#9e9e9e', border: '#2a2a4a'
+};
+
+function drawForestCanvas(canvas, cumResults, sliderK, measure) {
+  if (!cumResults || cumResults.length === 0) return;
+  const validAll = cumResults.filter(r=>r!==null);
+  if (validAll.length === 0) return;
+
+  const visible = cumResults.filter(r=>r!==null && r.k <= sliderK);
+  if (visible.length === 0) return;
+
+  const sorted = visible[0].sorted;
+  const studiesVisible = sorted.slice(0, sliderK);
+  const kVis = studiesVisible.length;
+  const pooled = visible[visible.length-1];
+
+  const ROW_H = 28, HEAD = 40, FOOT = 48, PAD_L = 180, PAD_R = 120, W = Math.max(600, canvas.parentElement.clientWidth - 32);
+  const H = HEAD + kVis * ROW_H + FOOT + 24;
+
+  const ctx = setCanvasSize(canvas, W, H);
+  ctx.fillStyle = COLORS.surface;
+  ctx.fillRect(0,0,W,H);
+
+  // Determine axis range
+  const allCI = visible.flatMap(r => [toDisplay(r.ci95[0],measure), toDisplay(r.ci95[1],measure)]);
+  const allPI = visible.flatMap(r => [toDisplay(r.pi95[0],measure), toDisplay(r.pi95[1],measure)]);
+  const all   = [...allCI, ...allPI].filter(isFinite);
+  let xMin = Math.min(...all), xMax = Math.max(...all);
+  const xPad = (xMax-xMin)*0.15;
+  xMin -= xPad; xMax += xPad;
+  if (!isFinite(xMin)||!isFinite(xMax)) { xMin=0.5; xMax=2.0; }
+
+  const log = isLogScale(measure);
+  const NULL_VAL = log ? 1.0 : 0.0;
+
+  const toX = val => PAD_L + (val-xMin)/(xMax-xMin) * (W - PAD_L - PAD_R);
+  const nullX = toX(NULL_VAL);
+
+  // Axis
+  ctx.strokeStyle = COLORS.border; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD_L, HEAD); ctx.lineTo(PAD_L, HEAD+kVis*ROW_H); ctx.stroke();
+
+  // Null line
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(nullX, HEAD); ctx.lineTo(nullX, HEAD+kVis*ROW_H+10); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Tick labels on x-axis
+  const ticks = 5;
+  ctx.fillStyle = COLORS.text2; ctx.font = '11px sans-serif'; ctx.textAlign = 'center';
+  for (let t=0; t<=ticks; t++) {
+    const val = xMin + (xMax-xMin)*t/ticks;
+    const x = toX(val);
+    ctx.fillText(fmt2(val), x, HEAD+kVis*ROW_H+20);
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,HEAD); ctx.lineTo(x,HEAD+kVis*ROW_H); ctx.stroke();
+  }
+  // axis label
+  ctx.fillStyle = COLORS.text2; ctx.font = '12px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(measure + (log ? ' (log scale display)' : ''), PAD_L+(W-PAD_L-PAD_R)/2, HEAD+kVis*ROW_H+40);
+
+  // header
+  ctx.fillStyle = COLORS.accent2; ctx.font = '700 12px sans-serif'; ctx.textAlign='left';
+  ctx.fillText('Study', 8, HEAD-8);
+  ctx.textAlign='right';
+  ctx.fillText(measure, W-8, HEAD-8);
+
+  // Each study row
+  for (let i=0; i<kVis; i++) {
+    const s = studiesVisible[i];
+    const eff = getEffectSize(s, measure, parseFloat(document.getElementById('set-cc').value) || 0.5);
+    if (!eff || !isFinite(eff.theta)) continue;
+    const y = HEAD + i*ROW_H + ROW_H/2;
+    const est = toDisplay(eff.theta, measure);
+    const se  = Math.sqrt(eff.v);
+    const ci0 = toDisplay(eff.theta - 1.96*se, measure);
+    const ci1 = toDisplay(eff.theta + 1.96*se, measure);
+    const xEst = toX(est), xCi0 = Math.max(PAD_L, toX(ci0)), xCi1 = Math.min(W-PAD_R, toX(ci1));
+
+    // CI line
+    ctx.strokeStyle = COLORS.text2; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xCi0,y); ctx.lineTo(xCi1,y); ctx.stroke();
+    // Whiskers
+    ctx.beginPath(); ctx.moveTo(xCi0,y-4); ctx.lineTo(xCi0,y+4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(xCi1,y-4); ctx.lineTo(xCi1,y+4); ctx.stroke();
+    // Square (size by weight: inversely proportional to variance)
+    const sz = Math.min(8, Math.max(3, 4 + 2*(1/(eff.v+0.1))/10));
+    ctx.fillStyle = COLORS.accent;
+    ctx.fillRect(xEst-sz/2, y-sz/2, sz, sz);
+
+    // Study label
+    ctx.fillStyle = COLORS.text; ctx.font='12px sans-serif'; ctx.textAlign='left';
+    const label = s.study.length>22 ? s.study.slice(0,21)+'…' : s.study;
+    ctx.fillText(label+' ('+s.year+')', 6, y+4);
+
+    // Estimate label
+    ctx.textAlign='right'; ctx.fillStyle=COLORS.text2; ctx.font='11px sans-serif';
+    ctx.fillText(fmt3(est)+' ['+fmt3(ci0)+', '+fmt3(ci1)+']', W-4, y+4);
+  }
+
+  // Pooled diamond
+  if (pooled) {
+    const py = HEAD + kVis*ROW_H + 16;
+    ctx.strokeStyle=COLORS.border; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(PAD_L, py-1); ctx.lineTo(W-PAD_R, py-1); ctx.stroke();
+
+    const pEst = toDisplay(pooled.estimate, measure);
+    const pCi0 = toDisplay(pooled.ci95[0], measure);
+    const pCi1 = toDisplay(pooled.ci95[1], measure);
+    const pPi0 = toDisplay(pooled.pi95[0], measure);
+    const pPi1 = toDisplay(pooled.pi95[1], measure);
+    const px   = toX(pEst);
+    const px0  = Math.max(PAD_L, toX(pCi0));
+    const px1  = Math.min(W-PAD_R, toX(pCi1));
+    const pp0  = Math.max(PAD_L, toX(pPi0));
+    const pp1  = Math.min(W-PAD_R, toX(pPi1));
+
+    // PI line
+    ctx.strokeStyle='rgba(79,195,247,0.4)'; ctx.lineWidth=2; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(pp0,py+20); ctx.lineTo(pp1,py+20); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Diamond
+    ctx.fillStyle = COLORS.accent;
+    ctx.beginPath();
+    ctx.moveTo(px, py+6);
+    ctx.lineTo(px0, py+16);
+    ctx.lineTo(px, py+26);
+    ctx.lineTo(px1, py+16);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle=COLORS.text; ctx.font='700 12px sans-serif'; ctx.textAlign='left';
+    ctx.fillText('Pooled (k='+pooled.k+')', 6, py+18);
+    ctx.textAlign='right'; ctx.fillStyle=COLORS.accent2; ctx.font='700 11px sans-serif';
+    ctx.fillText(fmt3(pEst)+' ['+fmt3(pCi0)+', '+fmt3(pCi1)+']', W-4, py+18);
+    ctx.fillStyle=COLORS.text2; ctx.font='11px sans-serif';
+    ctx.fillText('I²='+pooled.I2.toFixed(0)+'%  τ²='+pooled.tau2.toFixed(3), W-4, py+32);
+  }
+}
+
+function drawStabilityCanvas(canvas, cumResults, changePoints, sliderK, alertEffect, alertI2, measure) {
+  const valid = cumResults.filter(r=>r!==null && r.k<=sliderK);
+  if (valid.length < 1) return;
+  const W = Math.max(600, canvas.parentElement.clientWidth - 32);
+  const H = 220;
+  const ctx = setCanvasSize(canvas, W, H);
+  ctx.fillStyle = COLORS.surface;
+  ctx.fillRect(0,0,W,H);
+
+  const PAD = {t:20, b:40, l:60, r:80};
+  const plotW = W - PAD.l - PAD.r;
+  const plotH = H - PAD.t - PAD.b;
+
+  const ests  = valid.map(r => toDisplay(r.estimate, measure));
+  const ci0s  = valid.map(r => toDisplay(r.ci95[0], measure));
+  const ci1s  = valid.map(r => toDisplay(r.ci95[1], measure));
+  const pi0s  = valid.map(r => toDisplay(r.pi95[0], measure));
+  const pi1s  = valid.map(r => toDisplay(r.pi95[1], measure));
+
+  const allVals = [...ests, ...ci0s, ...ci1s, ...pi0s, ...pi1s].filter(isFinite);
+  if (allVals.length === 0) return;
+  let yMin = Math.min(...allVals), yMax = Math.max(...allVals);
+  const yPad = (yMax-yMin)*0.15 || 0.1;
+  yMin -= yPad; yMax += yPad;
+
+  const toXs = i => PAD.l + i/(valid.length > 1 ? valid.length-1 : 1) * plotW;
+  const toYs = v => PAD.t + (1-(v-yMin)/(yMax-yMin)) * plotH;
+
+  // PI ribbon
+  ctx.fillStyle = 'rgba(79,195,247,0.06)';
+  ctx.beginPath();
+  ctx.moveTo(toXs(0), toYs(pi0s[0]));
+  for (let i=1; i<valid.length; i++) ctx.lineTo(toXs(i), toYs(pi0s[i]));
+  for (let i=valid.length-1; i>=0; i--) ctx.lineTo(toXs(i), toYs(pi1s[i]));
+  ctx.closePath(); ctx.fill();
+
+  // CI ribbon
+  ctx.fillStyle = 'rgba(79,195,247,0.15)';
+  ctx.beginPath();
+  ctx.moveTo(toXs(0), toYs(ci0s[0]));
+  for (let i=1; i<valid.length; i++) ctx.lineTo(toXs(i), toYs(ci0s[i]));
+  for (let i=valid.length-1; i>=0; i--) ctx.lineTo(toXs(i), toYs(ci1s[i]));
+  ctx.closePath(); ctx.fill();
+
+  // Alert effect threshold
+  if (alertEffect !== null && alertEffect !== undefined && isFinite(alertEffect)) {
+    const ay = toYs(alertEffect);
+    if (ay >= PAD.t && ay <= PAD.t+plotH) {
+      ctx.strokeStyle='rgba(239,83,80,0.6)'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+      ctx.beginPath(); ctx.moveTo(PAD.l,ay); ctx.lineTo(PAD.l+plotW,ay); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle='rgba(239,83,80,0.7)'; ctx.font='10px sans-serif'; ctx.textAlign='right';
+      ctx.fillText('Alert: '+alertEffect, PAD.l+plotW-2, ay-3);
+    }
+  }
+
+  // Null line
+  const nullVal = isLogScale(measure) ? 1.0 : 0.0;
+  const nullY = toYs(nullVal);
+  if (nullY >= PAD.t && nullY <= PAD.t+plotH) {
+    ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(PAD.l,nullY); ctx.lineTo(PAD.l+plotW,nullY); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Change-point markers
+  (changePoints ?? []).filter(cp=>cp.studyIndex < sliderK).forEach(cp => {
+    const idx = cp.studyIndex;
+    if (idx >= valid.length) return;
+    const x = toXs(idx);
+    ctx.strokeStyle='rgba(255,167,38,0.7)'; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x,PAD.t); ctx.lineTo(x,PAD.t+plotH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=COLORS.orange; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('CP', x, PAD.t-5);
+  });
+
+  // Effect line
+  ctx.strokeStyle=COLORS.accent; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(toXs(0), toYs(ests[0]));
+  for (let i=1; i<valid.length; i++) ctx.lineTo(toXs(i), toYs(ests[i]));
+  ctx.stroke();
+
+  // Dots
+  for (let i=0; i<valid.length; i++) {
+    ctx.fillStyle=COLORS.accent;
+    ctx.beginPath(); ctx.arc(toXs(i), toYs(ests[i]), 4, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Y-axis ticks
+  const nTicks=5;
+  ctx.strokeStyle=COLORS.border; ctx.lineWidth=1;
+  for (let t=0; t<=nTicks; t++) {
+    const v = yMin + (yMax-yMin)*t/nTicks;
+    const y = toYs(v);
+    ctx.beginPath(); ctx.moveTo(PAD.l-4,y); ctx.lineTo(PAD.l+plotW,y); ctx.stroke();
+    ctx.fillStyle=COLORS.text2; ctx.font='10px sans-serif'; ctx.textAlign='right';
+    ctx.fillText(fmt2(v), PAD.l-6, y+3);
+  }
+
+  // X-axis labels (study numbers)
+  ctx.fillStyle=COLORS.text2; ctx.font='10px sans-serif'; ctx.textAlign='center';
+  for (let i=0; i<valid.length; i++) {
+    const x = toXs(i);
+    ctx.fillText(valid[i].year, x, PAD.t+plotH+14);
+  }
+
+  ctx.fillStyle=COLORS.text2; ctx.font='11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Study added (by year)', PAD.l+plotW/2, H-4);
+
+  ctx.save(); ctx.translate(14, PAD.t+plotH/2); ctx.rotate(-Math.PI/2);
+  ctx.font='11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Pooled '+measure, 0, 0);
+  ctx.restore();
+}
+
+function drawWhatIfCanvas(canvas, result, measure) {
+  if (!result) return;
+  const W = Math.max(500, canvas.parentElement.clientWidth - 32);
+  const H = 180;
+  const ctx = setCanvasSize(canvas, W, H);
+  ctx.fillStyle = COLORS.surface;
+  ctx.fillRect(0,0,W,H);
+
+  const PAD = {t:30, b:30, l:80, r:20};
+  const halfW = (W - PAD.l - PAD.r) / 2 - 10;
+
+  const b = result.before, a = result.after;
+  const vals = [b.ciLo, b.ciHi, a.ciLo, a.ciHi, b.piLo, b.piHi, a.piLo, a.piHi].filter(isFinite);
+  if (vals.length === 0) return;
+  let xMin=Math.min(...vals), xMax=Math.max(...vals);
+  const xP=(xMax-xMin)*0.15||0.1; xMin-=xP; xMax+=xP;
+
+  const log = isLogScale(measure);
+  const nullV = log ? 1.0 : 0.0;
+
+  function drawPanel(offsetX, panelW, pooled, label, color) {
+    const toXp = v => offsetX + (v-xMin)/(xMax-xMin)*panelW;
+    const midY = PAD.t + (H-PAD.t-PAD.b)/2;
+
+    // null line
+    const nx = toXp(nullV);
+    ctx.strokeStyle='rgba(255,255,255,0.15)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(nx,PAD.t); ctx.lineTo(nx,H-PAD.b); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // PI bar
+    ctx.strokeStyle='rgba(79,195,247,0.3)'; ctx.lineWidth=2; ctx.setLineDash([3,3]);
+    const px0=Math.max(offsetX,toXp(pooled.piLo)), px1=Math.min(offsetX+panelW,toXp(pooled.piHi));
+    ctx.beginPath(); ctx.moveTo(px0,midY+20); ctx.lineTo(px1,midY+20); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // CI line
+    const cx0=Math.max(offsetX,toXp(pooled.ciLo)), cx1=Math.min(offsetX+panelW,toXp(pooled.ciHi));
+    ctx.strokeStyle=color; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx0,midY); ctx.lineTo(cx1,midY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx0,midY-5); ctx.lineTo(cx0,midY+5); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx1,midY-5); ctx.lineTo(cx1,midY+5); ctx.stroke();
+
+    // Diamond
+    const dx = toXp(pooled.estDisp);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(dx, midY-8); ctx.lineTo(cx1, midY);
+    ctx.lineTo(dx, midY+8); ctx.lineTo(cx0, midY);
+    ctx.closePath(); ctx.fill();
+
+    // Label
+    ctx.fillStyle=color; ctx.font='700 12px sans-serif'; ctx.textAlign='center';
+    ctx.fillText(label, offsetX+panelW/2, PAD.t-6);
+    ctx.fillStyle=COLORS.text; ctx.font='11px sans-serif';
+    ctx.fillText(fmt3(pooled.estDisp)+' ['+fmt3(pooled.ciLo)+', '+fmt3(pooled.ciHi)+']', offsetX+panelW/2, H-PAD.b+12);
+
+    // axis ticks
+    ctx.fillStyle=COLORS.text2; ctx.font='10px sans-serif'; ctx.textAlign='center';
+    for (let t=0; t<=4; t++) {
+      const v=xMin+(xMax-xMin)*t/4;
+      ctx.fillText(fmt2(v), toXp(v), H-PAD.b+24);
+    }
+  }
+
+  drawPanel(PAD.l, halfW, b, 'Before', COLORS.text2);
+  drawPanel(PAD.l + halfW + 20, halfW, a, 'After', COLORS.green);
+
+  // divider
+  ctx.strokeStyle=COLORS.border; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(PAD.l+halfW+10, PAD.t); ctx.lineTo(PAD.l+halfW+10, H-PAD.b); ctx.stroke();
+
+  ctx.fillStyle=COLORS.text2; ctx.font='11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText(measure, PAD.l+halfW*2/2+10, H-4);
+}
+
+// =====================================================================
+// === UI ENGINE ===
+// =====================================================================
+
+function switchTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.getElementById('tbtn-'+id).classList.add('active');
+  document.getElementById('tbtn-'+id).setAttribute('aria-selected','true');
+  document.querySelectorAll('.tab-btn:not(.active)').forEach(b=>b.setAttribute('aria-selected','false'));
+  if (id==='timeline' && state.cumResults.length > 0) renderTimeline();
+  if (id==='whatif') renderWhatIfTab();
+  if (id==='report') renderReport();
+}
+
+function setMeasure(m) {
+  state.measure = m;
+  ['RR','OR','MD','SMD'].forEach(x=>{
+    const el=document.getElementById('seg-'+x);
+    if(el) el.classList.toggle('active', x===m);
+  });
+  renderTableHeaders();
+  saveToStorage();
+}
+
+function renderTableHeaders() {
+  const thead = document.getElementById('study-thead');
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  if (isBin) {
+    thead.innerHTML = '<tr><th>Study</th><th>Year</th><th>Events E</th><th>N E</th><th>Events C</th><th>N C</th><th></th></tr>';
+  } else {
+    thead.innerHTML = '<tr><th>Study</th><th>Year</th><th>Mean E</th><th>SD E</th><th>N E</th><th>Mean C</th><th>SD C</th><th>N C</th><th></th></tr>';
+  }
+}
+
+function renderTableRows() {
+  const tbody = document.getElementById('study-tbody');
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  tbody.innerHTML = '';
+  state.studies.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    if (isBin) {
+      tr.innerHTML = `<td><input value="${escHtml(row.study??'')}" oninput="updateRow(${i},'study',this.value)" aria-label="Study name"></td>
+        <td><input type="number" value="${row.year??''}" oninput="updateRow(${i},'year',+this.value)" style="width:70px" aria-label="Year"></td>
+        <td><input type="number" value="${row.eE??''}" oninput="updateRow(${i},'eE',+this.value)" style="width:70px" aria-label="Events experimental"></td>
+        <td><input type="number" value="${row.nE??''}" oninput="updateRow(${i},'nE',+this.value)" style="width:70px" aria-label="N experimental"></td>
+        <td><input type="number" value="${row.eC??''}" oninput="updateRow(${i},'eC',+this.value)" style="width:70px" aria-label="Events control"></td>
+        <td><input type="number" value="${row.nC??''}" oninput="updateRow(${i},'nC',+this.value)" style="width:70px" aria-label="N control"></td>
+        <td><button class="del-btn" onclick="delRow(${i})" aria-label="Delete row">&#x2715;</button></td>`;
+    } else {
+      tr.innerHTML = `<td><input value="${escHtml(row.study??'')}" oninput="updateRow(${i},'study',this.value)" aria-label="Study name"></td>
+        <td><input type="number" value="${row.year??''}" oninput="updateRow(${i},'year',+this.value)" style="width:65px" aria-label="Year"></td>
+        <td><input type="number" value="${row.mE??''}" oninput="updateRow(${i},'mE',+this.value)" style="width:65px" aria-label="Mean experimental"></td>
+        <td><input type="number" value="${row.sdE??''}" oninput="updateRow(${i},'sdE',+this.value)" style="width:65px" aria-label="SD experimental"></td>
+        <td><input type="number" value="${row.nE??''}" oninput="updateRow(${i},'nE',+this.value)" style="width:60px" aria-label="N experimental"></td>
+        <td><input type="number" value="${row.mC??''}" oninput="updateRow(${i},'mC',+this.value)" style="width:65px" aria-label="Mean control"></td>
+        <td><input type="number" value="${row.sdC??''}" oninput="updateRow(${i},'sdC',+this.value)" style="width:65px" aria-label="SD control"></td>
+        <td><input type="number" value="${row.nC??''}" oninput="updateRow(${i},'nC',+this.value)" style="width:60px" aria-label="N control"></td>
+        <td><button class="del-btn" onclick="delRow(${i})" aria-label="Delete row">&#x2715;</button></td>`;
+    }
+    tbody.appendChild(tr);
+  });
+  document.getElementById('study-count-badge').textContent = state.studies.length + ' studies';
+}
+
+function updateRow(i, field, val) {
+  state.studies[i][field] = val;
+  saveToStorage();
+}
+
+function addRow() {
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  if (isBin) state.studies.push({study:'',year:2024,eE:0,nE:100,eC:0,nC:100});
+  else        state.studies.push({study:'',year:2024,mE:0,sdE:1,nE:50,mC:0,sdC:1,nC:50});
+  renderTableRows();
+  saveToStorage();
+}
+
+function delRow(i) {
+  state.studies.splice(i,1);
+  renderTableRows();
+  saveToStorage();
+}
+
+function clearAll() {
+  if (!confirm('Clear all studies?')) return;
+  state.studies=[];
+  state.cumResults=[];
+  state.changePoints=[];
+  state.stability=null;
+  state.alerts=[];
+  renderTableRows();
+  showEmpty();
+  saveToStorage();
+}
+
+function showEmpty() {
+  ['timeline','whatif','report'].forEach(t=>{
+    const ec=document.getElementById(t+'-empty');
+    const cn=document.getElementById(t+'-content');
+    if(ec) ec.style.display='';
+    if(cn) cn.style.display='none';
+  });
+}
+
+function loadExample(idx) {
+  const ex = EXAMPLES[idx];
+  setMeasure(ex.measure);
+  state.studies = ex.studies.map(s=>({...s}));
+  renderTableRows();
+  saveToStorage();
+  runAnalysis();
+}
+
+function parsePaste() {
+  const raw = document.getElementById('paste-area').value.trim();
+  if (!raw) return;
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  const rows = raw.split('\n').map(r=>r.split('\t'));
+  let added=0;
+  rows.forEach(cols=>{
+    if (cols.length < 4) return;
+    try {
+      if (isBin) {
+        const row={study:cols[0].trim(),year:parseInt(cols[1]),eE:parseFloat(cols[2]),nE:parseFloat(cols[3]),eC:parseFloat(cols[4]),nC:parseFloat(cols[5])};
+        if (isFinite(row.year)&&isFinite(row.nE)&&isFinite(row.nC)) { state.studies.push(row); added++; }
+      } else {
+        const row={study:cols[0].trim(),year:parseInt(cols[1]),mE:parseFloat(cols[2]),sdE:parseFloat(cols[3]),nE:parseFloat(cols[4]),mC:parseFloat(cols[5]),sdC:parseFloat(cols[6]),nC:parseFloat(cols[7])};
+        if (isFinite(row.year)&&isFinite(row.nE)&&isFinite(row.nC)) { state.studies.push(row); added++; }
+      }
+    } catch(e) {}
+  });
+  renderTableRows();
+  saveToStorage();
+  if (added>0) alert('Imported '+added+' rows.');
+}
+
+function saveSettings() {
+  saveToStorage();
+  alert('Settings saved.');
+}
+
+function runAnalysis() {
+  if (state.studies.length < 1) { alert('Add at least 1 study.'); return; }
+  const cc = parseFloat(document.getElementById('set-cc').value) ?? 0.5;
+  const cpThresh = parseFloat(document.getElementById('set-cp-thresh').value) ?? 10;
+  const stabWindow = parseInt(document.getElementById('set-stab-window').value) ?? 3;
+  const stabTol    = parseFloat(document.getElementById('set-stab-tol').value) ?? 5;
+  const alertEffect= parseFloat(document.getElementById('alert-effect').value);
+  const alertPI    = parseFloat(document.getElementById('alert-pi').value);
+  const alertI2v   = parseFloat(document.getElementById('alert-i2').value);
+
+  state.cumResults  = cumulativeByDate(state.studies, state.measure, cc);
+  state.changePoints= detectChangePoints(state.cumResults, cpThresh);
+  state.stability   = stabilityAnalysis(state.cumResults, stabWindow, stabTol);
+  state.alerts      = computeAlerts(state.cumResults,
+    isFinite(alertEffect)?alertEffect:null,
+    isFinite(alertPI)?alertPI:null,
+    isFinite(alertI2v)?alertI2v:null);
+
+  const valid = state.cumResults.filter(r=>r!==null);
+  const k = valid.length;
+  if (k===0) { alert('Could not compute any results — check data.'); return; }
+
+  // Update slider
+  const slider = document.getElementById('timeline-slider');
+  slider.max = k; slider.value = k;
+  state.sliderVal = k;
+
+  // Show content panels
+  ['timeline','whatif','report'].forEach(t=>{
+    const ec=document.getElementById(t+'-empty');
+    const cn=document.getElementById(t+'-content');
+    if(ec) ec.style.display='none';
+    if(cn) cn.style.display='';
+  });
+
+  renderTimeline();
+  renderWhatIfFields();
+  renderReport();
+  switchTab('timeline');
+}
+
+function onSliderChange(val) {
+  state.sliderVal = parseInt(val);
+  renderTimeline();
+}
+
+function togglePlay() {
+  if (state.playing) {
+    clearInterval(state.playInterval);
+    state.playing = false;
+    document.getElementById('play-btn').innerHTML = '&#9654;';
+    document.getElementById('play-btn').title = 'Play';
+  } else {
+    state.playing = true;
+    document.getElementById('play-btn').innerHTML = '&#9646;&#9646;';
+    document.getElementById('play-btn').title = 'Pause';
+    const valid = state.cumResults.filter(r=>r!==null);
+    const maxK = valid.length;
+    if (state.sliderVal >= maxK) { state.sliderVal = 1; }
+    const speed = parseInt(document.getElementById('speed-select').value) ?? 500;
+    state.playInterval = setInterval(()=>{
+      state.sliderVal++;
+      if (state.sliderVal > maxK) {
+        clearInterval(state.playInterval);
+        state.playing=false;
+        document.getElementById('play-btn').innerHTML='&#9654;';
+        document.getElementById('play-btn').title='Play';
+        return;
+      }
+      const slider=document.getElementById('timeline-slider');
+      slider.value=state.sliderVal;
+      renderTimeline();
+    }, speed);
+  }
+}
+
+function renderTimeline() {
+  const valid = state.cumResults.filter(r=>r!==null);
+  if (valid.length===0) return;
+  const k = state.sliderVal;
+  const cur = valid.filter(r=>r.k<=k);
+  if (cur.length===0) return;
+  const last = cur[cur.length-1];
+
+  // Update slider label
+  document.getElementById('slider-label').textContent =
+    'Studies included: '+k+' of '+valid.length+' (up to '+(last.year??'')+ ')';
+
+  // Info chips
+  const estDisp = toDisplay(last.estimate, state.measure);
+  const ci0 = toDisplay(last.ci95[0], state.measure);
+  const ci1 = toDisplay(last.ci95[1], state.measure);
+  document.getElementById('timeline-info').innerHTML =
+    '<span class="info-chip blue">'+state.measure+' '+fmt3(estDisp)+' ['+fmt3(ci0)+', '+fmt3(ci1)+']</span>'+
+    '<span class="info-chip '+(last.I2>75?'red':last.I2>50?'orange':'green')+'">I² '+last.I2.toFixed(0)+'%</span>'+
+    '<span class="info-chip">τ² '+last.tau2.toFixed(3)+'</span>'+
+    '<span class="info-chip">k='+k+'</span>';
+
+  // Maturity banner
+  const banner = document.getElementById('maturity-banner');
+  if (state.stability && state.stability.stable && state.stability.stableSince !== null && k >= state.stability.stableSince+1) {
+    const sinceStudy = valid[state.stability.stableSince] ?? valid[valid.length-1];
+    document.getElementById('maturity-text').textContent =
+      'Evidence mature — estimate stable within '+document.getElementById('set-stab-tol').value+'% since '+
+      sinceStudy.study+' ('+sinceStudy.year+')';
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
+
+  const alertEffect = parseFloat(document.getElementById('alert-effect').value);
+  const alertI2v    = parseFloat(document.getElementById('alert-i2').value);
+
+  drawForestCanvas(
+    document.getElementById('forest-canvas'),
+    state.cumResults, k, state.measure
+  );
+  drawStabilityCanvas(
+    document.getElementById('stability-canvas'),
+    state.cumResults, state.changePoints, k,
+    isFinite(alertEffect)?alertEffect:null,
+    isFinite(alertI2v)?alertI2v:null,
+    state.measure
+  );
+}
+
+function renderWhatIfFields() {
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  const el = document.getElementById('whatif-fields');
+  if (isBin) {
+    el.innerHTML = `
+      <div class="field-row"><label>Events (exp)</label><input type="number" id="wi-eE" value="50" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="Events experimental"></div>
+      <div class="field-row"><label>N (exp)</label><input type="number" id="wi-nE" value="500" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="N experimental"></div>
+      <div class="field-row"><label>Events (ctrl)</label><input type="number" id="wi-eC" value="80" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="Events control"></div>
+      <div class="field-row"><label>N (ctrl)</label><input type="number" id="wi-nC" value="500" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="N control"></div>`;
+  } else {
+    el.innerHTML = `
+      <div class="field-row"><label>Mean (exp)</label><input type="number" id="wi-mE" value="0" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="Mean experimental"></div>
+      <div class="field-row"><label>SD (exp)</label><input type="number" id="wi-sdE" value="1" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="SD experimental"></div>
+      <div class="field-row"><label>N (exp)</label><input type="number" id="wi-nE" value="100" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="N experimental"></div>
+      <div class="field-row"><label>Mean (ctrl)</label><input type="number" id="wi-mC" value="0.2" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="Mean control"></div>
+      <div class="field-row"><label>SD (ctrl)</label><input type="number" id="wi-sdC" value="1" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="SD control"></div>
+      <div class="field-row"><label>N (ctrl)</label><input type="number" id="wi-nC" value="100" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;" aria-label="N control"></div>`;
+  }
+}
+
+function renderWhatIfTab() {
+  if (state.studies.length===0 || state.cumResults.length===0) return;
+  renderWhatIfFields();
+}
+
+function runWhatIf() {
+  const isBin = state.measure==='RR'||state.measure==='OR';
+  const name  = document.getElementById('wi-name').value || 'Future RCT';
+  const year  = parseInt(document.getElementById('wi-year').value) || 2025;
+  const cc    = parseFloat(document.getElementById('set-cc').value) ?? 0.5;
+  let hypo;
+  if (isBin) {
+    hypo = {study:name, year, eE:parseFloat(document.getElementById('wi-eE').value)||0,
+      nE:parseFloat(document.getElementById('wi-nE').value)||100,
+      eC:parseFloat(document.getElementById('wi-eC').value)||0,
+      nC:parseFloat(document.getElementById('wi-nC').value)||100};
+  } else {
+    hypo = {study:name, year, mE:parseFloat(document.getElementById('wi-mE').value)||0,
+      sdE:parseFloat(document.getElementById('wi-sdE').value)||1,
+      nE:parseFloat(document.getElementById('wi-nE').value)||100,
+      mC:parseFloat(document.getElementById('wi-mC').value)||0,
+      sdC:parseFloat(document.getElementById('wi-sdC').value)||1,
+      nC:parseFloat(document.getElementById('wi-nC').value)||100};
+  }
+
+  const result = whatIf(state.studies, hypo, state.measure, cc);
+  if (!result) { alert('Could not compute. Check data.'); return; }
+  state.whatIfResult = result;
+
+  const b=result.before, a=result.after, d=result.delta;
+  const statsRow = (label, val) => `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value">${val}</span></div>`;
+
+  document.getElementById('before-stats').innerHTML =
+    statsRow('k', b.k) +
+    statsRow(state.measure, fmt3(b.estDisp)) +
+    statsRow('95% CI', '['+fmt3(b.ciLo)+', '+fmt3(b.ciHi)+']') +
+    statsRow('95% PI', '['+fmt3(b.piLo)+', '+fmt3(b.piHi)+']') +
+    statsRow('I²', b.I2.toFixed(1)+'%') +
+    statsRow('τ²', b.tau2.toFixed(4));
+
+  document.getElementById('after-stats').innerHTML =
+    statsRow('k', a.k) +
+    statsRow(state.measure, fmt3(a.estDisp)) +
+    statsRow('95% CI', '['+fmt3(a.ciLo)+', '+fmt3(a.ciHi)+']') +
+    statsRow('95% PI', '['+fmt3(a.piLo)+', '+fmt3(a.piHi)+']') +
+    statsRow('I²', a.I2.toFixed(1)+'%') +
+    statsRow('τ²', a.tau2.toFixed(4));
+
+  function deltaClass(v, goodNeg) {
+    if (Math.abs(v) < 0.001) return 'neut';
+    return (goodNeg ? v<0 : v>0) ? 'neg' : 'pos';
+  }
+  const deltaRow = (label, val, cls) =>
+    `<div class="delta-row"><span class="stat-label">${label}</span><span class="delta-val ${cls}">${val}</span></div>`;
+
+  document.getElementById('delta-stats').innerHTML =
+    deltaRow('Δ '+state.measure, (d.estimate>=0?'+':'')+fmt3(d.estimate), deltaClass(d.estimate,true)) +
+    deltaRow('Δ CI width', (d.ciWidth>=0?'+':'')+fmt3(d.ciWidth), deltaClass(d.ciWidth,false)) +
+    deltaRow('Δ I²', (d.I2>=0?'+':'')+d.I2.toFixed(1)+'%', deltaClass(d.I2,false)) +
+    deltaRow('Δ τ²', (d.tau2>=0?'+':'')+d.tau2.toFixed(4), deltaClass(d.tau2,false));
+
+  drawWhatIfCanvas(document.getElementById('whatif-canvas'), result, state.measure);
+}
+
+function renderReport() {
+  if (state.cumResults.length===0) return;
+  const valid = state.cumResults.filter(r=>r!==null);
+  if (valid.length===0) return;
+  const last = valid[valid.length-1];
+
+  // Verdict
+  const stab = state.stability;
+  let verdictHTML;
+  if (stab && stab.stable) {
+    verdictHTML = `<div class="verdict-box stable"><div class="verdict-icon">✓</div>
+      <div class="verdict-text stable"><h4>Evidence Mature</h4>
+      <p>The pooled ${state.measure} has been stable within the predefined tolerance for the last ${document.getElementById('set-stab-window').value} or more consecutive study additions. Current pooled estimate: ${fmt3(toDisplay(last.estimate,state.measure))} (95% CI ${fmt3(toDisplay(last.ci95[0],state.measure))}–${fmt3(toDisplay(last.ci95[1],state.measure))}).</p></div></div>`;
+  } else if (valid.length >= 3) {
+    verdictHTML = `<div class="verdict-box maturing"><div class="verdict-icon">~</div>
+      <div class="verdict-text maturing"><h4>Evidence Maturing</h4>
+      <p>The estimate has not yet stabilised within tolerance. Continue accumulating studies. Current pooled ${state.measure}: ${fmt3(toDisplay(last.estimate,state.measure))} (k=${last.k}, I²=${last.I2.toFixed(0)}%).</p></div></div>`;
+  } else {
+    verdictHTML = `<div class="verdict-box unstable"><div class="verdict-icon">!</div>
+      <div class="verdict-text unstable"><h4>Insufficient Evidence</h4>
+      <p>Too few studies (k=${valid.length}) to assess evidence maturity. Pooled ${state.measure}: ${fmt3(toDisplay(last.estimate,state.measure))}.</p></div></div>`;
+  }
+  document.getElementById('verdict-container').innerHTML = verdictHTML;
+
+  // Change points
+  const cpList = document.getElementById('cp-list');
+  if (state.changePoints.length===0) {
+    cpList.innerHTML = '<p style="color:var(--text2);font-size:13px;">No change points detected at the current threshold ('+document.getElementById('set-cp-thresh').value+'%).</p>';
+  } else {
+    cpList.innerHTML = state.changePoints.map(cp=>`<div class="change-point-item">${escHtml(cp.narrative)}</div>`).join('');
+  }
+
+  // Alerts
+  const alertList = document.getElementById('alert-list');
+  if (state.alerts.length===0) {
+    alertList.innerHTML = '<p style="color:var(--text2);font-size:13px;">No alert thresholds configured or triggered.</p>';
+  } else {
+    alertList.innerHTML = state.alerts.map(a=>`<div class="alert-item">${escHtml(a.msg)}</div>`).join('');
+  }
+
+  // Summary table
+  const summaryEl = document.getElementById('summary-table');
+  let tbl = '<div style="overflow-x:auto"><table class="data-table"><thead><tr><th>k</th><th>Study</th><th>Year</th><th>'+state.measure+'</th><th>CI low</th><th>CI high</th><th>PI low</th><th>PI high</th><th>I²</th><th>τ²</th></tr></thead><tbody>';
+  valid.forEach(r=>{
+    tbl += `<tr><td>${r.k}</td><td>${escHtml(r.study)}</td><td>${r.year}</td>
+      <td>${fmt3(toDisplay(r.estimate,state.measure))}</td>
+      <td>${fmt3(toDisplay(r.ci95[0],state.measure))}</td>
+      <td>${fmt3(toDisplay(r.ci95[1],state.measure))}</td>
+      <td>${fmt3(toDisplay(r.pi95[0],state.measure))}</td>
+      <td>${fmt3(toDisplay(r.pi95[1],state.measure))}</td>
+      <td>${r.I2.toFixed(1)}%</td>
+      <td>${r.tau2.toFixed(4)}</td></tr>`;
+  });
+  tbl += '</tbody></table></div>';
+  summaryEl.innerHTML = tbl;
+}
+
+// =====================================================================
+// === EXPORT ===
+// =====================================================================
+
+function exportCSV() {
+  const valid = state.cumResults.filter(r=>r!==null);
+  if (valid.length===0) { alert('No results.'); return; }
+  const m = state.measure;
+  const header = 'k,Study,Year,'+m+',CI_low,CI_high,PI_low,PI_high,I2_pct,tau2\n';
+  const rows = valid.map(r=>[
+    r.k, '"'+r.study.replace(/"/g,'""')+'"', r.year,
+    fmt3(toDisplay(r.estimate,m)), fmt3(toDisplay(r.ci95[0],m)), fmt3(toDisplay(r.ci95[1],m)),
+    fmt3(toDisplay(r.pi95[0],m)), fmt3(toDisplay(r.pi95[1],m)),
+    r.I2.toFixed(1), r.tau2.toFixed(4)
+  ].join(',')).join('\n');
+  const csv = header+rows;
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='livingma-results.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportPNG() {
+  const fc = document.getElementById('forest-canvas');
+  const sc = document.getElementById('stability-canvas');
+  if (!fc || !sc) { alert('Run analysis first.'); return; }
+  const combined = document.createElement('canvas');
+  const dpr = window.devicePixelRatio ?? 1;
+  const w = Math.max(fc.width/dpr, sc.width/dpr);
+  const h = fc.height/dpr + sc.height/dpr + 20;
+  combined.width  = w * dpr;
+  combined.height = h * dpr;
+  combined.style.width  = w+'px';
+  combined.style.height = h+'px';
+  const ctx = combined.getContext('2d');
+  ctx.scale(dpr,dpr);
+  ctx.fillStyle='#0f0f1a';
+  ctx.fillRect(0,0,w,h);
+  ctx.drawImage(fc, 0, 0, fc.width/dpr, fc.height/dpr);
+  ctx.drawImage(sc, 0, fc.height/dpr+20, sc.width/dpr, sc.height/dpr);
+  const url = combined.toDataURL('image/png');
+  const a   = document.createElement('a');
+  a.href=url; a.download='livingma-charts.png';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportReport() {
+  const valid = state.cumResults.filter(r=>r!==null);
+  if (valid.length===0) { alert('No results.'); return; }
+  const last  = valid[valid.length-1];
+  const m     = state.measure;
+  const stab  = state.stability;
+  const cpNarr= state.changePoints.map(cp=>'<li>'+escHtml(cp.narrative)+'</li>').join('');
+  const alertNarr = state.alerts.map(a=>'<li>'+escHtml(a.msg)+'</li>').join('');
+  const html =
+`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<title>LivingMA Report</title>
+<style>body{font-family:sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#222}
+h1{color:#0d3b66}h2{color:#1565c0;border-bottom:2px solid #e3f2fd;padding-bottom:6px}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid #e0e0e0;padding:8px;text-align:left}
+th{background:#e3f2fd}tr:nth-child(even){background:#f9f9f9}
+.verdict{padding:12px 16px;border-radius:6px;margin-bottom:16px}
+.stable{background:#e8f5e9;border-left:4px solid #43a047}
+.maturing{background:#fff8e1;border-left:4px solid #ffa000}
+</style></head><body>
+<h1>LivingMA — Living Meta-Analysis Report</h1>
+<p><strong>Generated:</strong> ${new Date().toISOString().slice(0,10)} &nbsp; <strong>Measure:</strong> ${m} &nbsp; <strong>Method:</strong> REML + HKSJ &nbsp; <strong>Studies:</strong> ${last.k}</p>
+<h2>Final Pooled Estimate</h2>
+<p>${m}: <strong>${fmt3(toDisplay(last.estimate,m))}</strong> (95% CI ${fmt3(toDisplay(last.ci95[0],m))}–${fmt3(toDisplay(last.ci95[1],m))}, 95% PI ${fmt3(toDisplay(last.pi95[0],m))}–${fmt3(toDisplay(last.pi95[1],m))})<br>
+I² = ${last.I2.toFixed(1)}%, τ² = ${last.tau2.toFixed(4)}, Q(${last.df}) = ${last.Q ? last.Q.toFixed(2) : 'N/A'}</p>
+<h2>Evidence Maturity</h2>
+<div class="verdict ${stab&&stab.stable?'stable':'maturing'}">${stab&&stab.stable?'<strong>Evidence Mature</strong>':'<strong>Evidence Maturing — not yet stable within tolerance</strong>'}</div>
+<h2>Change Points</h2>${cpNarr?'<ul>'+cpNarr+'</ul>':'<p>None detected.</p>'}
+<h2>Alerts</h2>${alertNarr?'<ul>'+alertNarr+'</ul>':'<p>No alerts triggered.</p>'}
+<h2>Cumulative Results Table</h2>
+<table><thead><tr><th>k</th><th>Study</th><th>Year</th><th>${m}</th><th>CI low</th><th>CI high</th><th>PI low</th><th>PI high</th><th>I²</th><th>τ²</th></tr></thead><tbody>
+${valid.map(r=>`<tr><td>${r.k}</td><td>${escHtml(r.study)}</td><td>${r.year}</td><td>${fmt3(toDisplay(r.estimate,m))}</td><td>${fmt3(toDisplay(r.ci95[0],m))}</td><td>${fmt3(toDisplay(r.ci95[1],m))}</td><td>${fmt3(toDisplay(r.pi95[0],m))}</td><td>${fmt3(toDisplay(r.pi95[1],m))}</td><td>${r.I2.toFixed(1)}%</td><td>${r.tau2.toFixed(4)}</td></tr>`).join('')}
+</tbody></table>
+<p style="margin-top:24px;color:#9e9e9e;font-size:12px">LivingMA v1.0 · Mahmood Ahmad, Royal Free Hospital · REML + HKSJ meta-analysis · Generated by LivingMA (github.com/mahmood726-cyber/livingma)</p>
+</body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href=url; a.download='livingma-report.html';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// =====================================================================
+// === STORAGE ===
+// =====================================================================
+
+function saveToStorage() {
+  try {
+    localStorage.setItem('lma_v1_studies',   JSON.stringify(state.studies));
+    localStorage.setItem('lma_v1_measure',   state.measure);
+    localStorage.setItem('lma_v1_settings',  JSON.stringify({
+      cc:    document.getElementById('set-cc').value,
+      cpT:   document.getElementById('set-cp-thresh').value,
+      stabW: document.getElementById('set-stab-window').value,
+      stabT: document.getElementById('set-stab-tol').value,
+      aEff:  document.getElementById('alert-effect').value,
+      aPI:   document.getElementById('alert-pi').value,
+      aI2:   document.getElementById('alert-i2').value
+    }));
+  } catch(e) {}
+}
+
+function loadFromStorage() {
+  try {
+    const studies = JSON.parse(localStorage.getItem('lma_v1_studies') ?? 'null');
+    if (Array.isArray(studies)) state.studies = studies;
+    const m = localStorage.getItem('lma_v1_measure');
+    if (m && ['RR','OR','MD','SMD'].includes(m)) state.measure = m;
+    const settings = JSON.parse(localStorage.getItem('lma_v1_settings') ?? 'null');
+    if (settings) {
+      if (settings.cc  != null) document.getElementById('set-cc').value         = settings.cc;
+      if (settings.cpT != null) document.getElementById('set-cp-thresh').value  = settings.cpT;
+      if (settings.stabW!=null) document.getElementById('set-stab-window').value= settings.stabW;
+      if (settings.stabT!=null) document.getElementById('set-stab-tol').value   = settings.stabT;
+      if (settings.aEff!= null && settings.aEff!=='') document.getElementById('alert-effect').value = settings.aEff;
+      if (settings.aPI != null && settings.aPI !=='') document.getElementById('alert-pi').value     = settings.aPI;
+      if (settings.aI2 != null && settings.aI2 !=='') document.getElementById('alert-i2').value     = settings.aI2;
+    }
+  } catch(e) {}
+}
+
+// =====================================================================
+// === UTILITIES ===
+// =====================================================================
+
+function escHtml(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// =====================================================================
+// === INIT ===
+// =====================================================================
+
+(function init() {
+  loadFromStorage();
+  setMeasure(state.measure);
+  renderTableHeaders();
+  renderTableRows();
+  if (state.studies.length > 0) {
+    setTimeout(()=>{ try { runAnalysis(); } catch(e){} }, 100);
+  }
+})();
+</script>
+</body>
+</html>
