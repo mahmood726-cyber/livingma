@@ -794,9 +794,7 @@ function remlTau2(thetas, vars) {
     const muR = wR.reduce((s,w,i)=>s+w*thetas[i],0) / sumWR;
     const P = sumWR - sumWR2/sumWR;
     const QR = wR.reduce((s,w,i)=>s+w*(thetas[i]-muR)**2,0);
-    const tau2New = Math.max(0, tau2 + (QR-(k-1))/(P - sumWR2/sumWR) * (tau2**2 === 0 ? 1 : 1));
-    // Standard REML update
-    const denom = wR.reduce((s,w)=>s+w*w*(thetas[i]-muR)**2 - w, 0);
+    const tau2New = Math.max(0, tau2 + (QR-(k-1))/(P - sumWR2/sumWR));
     // simplified convergence: stop if change tiny
     if (Math.abs(tau2New - tau2) < 1e-8) { tau2 = tau2New; break; }
     tau2 = tau2New;
