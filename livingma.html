@@ -829,8 +829,11 @@ function pool(thetas, vars) {
   const typVar = (sumWF - wF.reduce((s,w)=>s+w*w,0)/sumWF) / (k-1);
   const I2 = Math.max(0, Math.min(100, 100*(tau2)/(tau2 + 1/typVar)));
 
-  // HKSJ variance
-  const hksjVar = wR.reduce((s,w,i)=>s+w*(thetas[i]-muR)**2,0) / ((k-1)*sumW);
+  // HKSJ variance (Knapp-Hartung). Apply ad-hoc floor max(1, q) on the
+  // scaling factor so the CI is never narrower than the standard RE CI when
+  // q < 1 (Q < k-1) — otherwise HKSJ is anticonservative (Röver et al. 2015).
+  const qHK = wR.reduce((s,w,i)=>s+w*(thetas[i]-muR)**2,0) / (k-1);
+  const hksjVar = Math.max(1, qHK) / sumW;
   const seMuHK = Math.sqrt(hksjVar);
 
   const t95 = tInv95(k-1);
@@ -1109,7 +1112,8 @@ function drawForestCanvas(canvas, cumResults, sliderK, measure) {
   // Each study row
   for (let i=0; i<kVis; i++) {
     const s = studiesVisible[i];
-    const eff = getEffectSize(s, measure, parseFloat(document.getElementById('set-cc').value) || 0.5);
+    const ccVis = parseFloat(document.getElementById('set-cc').value);
+    const eff = getEffectSize(s, measure, isFinite(ccVis) ? ccVis : 0.5);
     if (!eff || !isFinite(eff.theta)) continue;
     const y = HEAD + i*ROW_H + ROW_H/2;
     const est = toDisplay(eff.theta, measure);
@@ -1518,10 +1522,14 @@ function saveSettings() {
 
 function runAnalysis() {
   if (state.studies.length < 1) { alert('Add at least 1 study.'); return; }
-  const cc = parseFloat(document.getElementById('set-cc').value) ?? 0.5;
-  const cpThresh = parseFloat(document.getElementById('set-cp-thresh').value) ?? 10;
-  const stabWindow = parseInt(document.getElementById('set-stab-window').value) ?? 3;
-  const stabTol    = parseFloat(document.getElementById('set-stab-tol').value) ?? 5;
+  const ccRaw = parseFloat(document.getElementById('set-cc').value);
+  const cc = isFinite(ccRaw) ? ccRaw : 0.5;
+  const cpRaw = parseFloat(document.getElementById('set-cp-thresh').value);
+  const cpThresh = isFinite(cpRaw) ? cpRaw : 10;
+  const swRaw = parseInt(document.getElementById('set-stab-window').value);
+  const stabWindow = Number.isInteger(swRaw) ? swRaw : 3;
+  const stRaw = parseFloat(document.getElementById('set-stab-tol').value);
+  const stabTol    = isFinite(stRaw) ? stRaw : 5;
   const alertEffect= parseFloat(document.getElementById('alert-effect').value);
   const alertPI    = parseFloat(document.getElementById('alert-pi').value);
   const alertI2v   = parseFloat(document.getElementById('alert-i2').value);
@@ -1671,7 +1679,8 @@ function runWhatIf() {
   const isBin = state.measure==='RR'||state.measure==='OR';
   const name  = document.getElementById('wi-name').value || 'Future RCT';
   const year  = parseInt(document.getElementById('wi-year').value) || 2025;
-  const cc    = parseFloat(document.getElementById('set-cc').value) ?? 0.5;
+  const ccRaw = parseFloat(document.getElementById('set-cc').value);
+  const cc    = isFinite(ccRaw) ? ccRaw : 0.5;
   let hypo;
   if (isBin) {
     hypo = {study:name, year, eE:parseFloat(document.getElementById('wi-eE').value)||0,
